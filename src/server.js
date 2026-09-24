@@ -1335,8 +1335,8 @@ function requireDashboardAuth(req, res, next) {
   if (req.path === "/healthz" || req.path === "/setup/healthz") return next();
   if (req.path.startsWith("/hooks")) return next(); // allow OpenClaw webhook endpoints to bypass dashboard auth
 // OpenClaw Control UI / WebChat under /openclaw is protected by the gateway (token + device pairing).
-  // Native apps can't answer Basic auth, so skip the dashboard password here. /setup stays protected.
-  if (req.path === "/openclaw" || req.path.startsWith("/openclaw/")) return next();
+  // Native apps can't answer Basic auth, so skip the dashboard password here. /setup stays protected
+  if (req.path === "/openclaw" || req.path.startsWith("/openclaw/")) return next();  if (req.path.startsWith("/assets/") || ["/favicon.svg", "/favicon-32.png", "/apple-touch-icon.png", "/manifest.webmanifest"].includes(req.path)) return next(); // static Control UI files
   if (!SETUP_PASSWORD) return next(); // no password configured → open
   const header = req.headers.authorization || "";
   const [scheme, encoded] = header.split(" ");

@@ -1334,6 +1334,9 @@ proxy.on("error", (err, _req, res) => {
 function requireDashboardAuth(req, res, next) {
   if (req.path === "/healthz" || req.path === "/setup/healthz") return next();
   if (req.path.startsWith("/hooks")) return next(); // allow OpenClaw webhook endpoints to bypass dashboard auth
+// OpenClaw Control UI / WebChat under /openclaw is protected by the gateway (token + device pairing).
+  // Native apps can't answer Basic auth, so skip the dashboard password here. /setup stays protected.
+  if (req.path === "/openclaw" || req.path.startsWith("/openclaw/")) return next();
   if (!SETUP_PASSWORD) return next(); // no password configured → open
   const header = req.headers.authorization || "";
   const [scheme, encoded] = header.split(" ");

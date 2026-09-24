@@ -1355,8 +1355,24 @@ function requireDashboardAuth(req, res, next) {
 // The gateway is only reachable from this container. The Control UI in the browser
 // cannot set custom Authorization headers for WebSocket connections, so we inject
 // the token into proxied requests at the wrapper level.
+// SECURITY: only swap in the gateway token for requests that already passed the
+// dashboard password (valid Basic auth). Anonymous requests (including WebSocket
+// upgrades and /hooks) are forwarded untouched, so the gateway's own token/pairing
+// checks apply. Previously the token was injected into ANY request without an
+// Authorization header, which handed full gateway access to unauthenticated clients.
+function hasValidDashboardBasicAuth(req) {
+  if (!SETUP_PASSWORD) return false;
+  const header = req?.headers?.authorization || "";
+  const [scheme, encoded] = header.split(" ");
+  if (scheme !== "Basic" || !encoded) return false;
+  const decoded = Buffer.from(encoded, "base64").toString("utf8");
+  const idx = decoded.indexOf(":");
+  const password = idx >= 0 ? decoded.slice(idx + 1) : "";
+  return password === SETUP_PASSWORD;
+}
+
 function attachGatewayAuthHeader(req) {
-  if (!req?.headers?.authorization && OPENCLAW_GATEWAY_TOKEN) {
+  if (OPENCLAW_GATEWAY_TOKEN && hasValidDashboardBasicAuth(req)) {
     req.headers.authorization = `Bearer ${OPENCLAW_GATEWAY_TOKEN}`;
   }
 }
